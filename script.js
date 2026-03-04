@@ -30,12 +30,27 @@ class FileExplorer {
 
     // ========== ADMIN-CONFIG SYSTEM ==========
     
+    // Admin-Config laden (wie Minecraft Config) - mit Datei-Speicherung
     loadAdminConfig() {
+        // Zuerst versuchen aus localStorage zu laden
         const config = localStorage.getItem('adminConfig');
-        return config ? JSON.parse(config) : { adminAccounts: [] };
+        if (config) {
+            return JSON.parse(config);
+        }
+        
+        // Initiale Config erstellen
+        const initialConfig = {
+            version: '1.0.0',
+            createdAt: new Date().toISOString(),
+            adminAccounts: []
+        };
+        
+        this.saveAdminConfig(initialConfig);
+        return initialConfig;
     }
     
     saveAdminConfig() {
+        this.adminConfig.adminAccounts = this.adminAccounts;
         localStorage.setItem('adminConfig', JSON.stringify(this.adminConfig));
     }
 
@@ -534,11 +549,21 @@ class FileExplorer {
         }
     }
 
+    // Sicherheits-Passwort abbrechen
+    cancelSecurityPassword() {
+        this.closeAdminCredentialsModal();
+    }
+
     // Admin-Zugangsdaten Modal
     showAdminCredentialsModal() {
         document.getElementById('securityPasswordModal').classList.add('hidden');
         document.getElementById('adminCredentialsModal').classList.remove('hidden');
         document.getElementById('usernameInput').focus();
+    }
+
+    // Admin-Zugangsdaten abbrechen
+    cancelAdminCredentials() {
+        this.closeAdminCredentialsModal();
     }
 
     // Admin-Login durchführen
@@ -562,7 +587,71 @@ class FileExplorer {
             return;
         }
         
-        this.showNotification('Falsche Admin-Zugangsdaten!', 'error');
+        // Wenn Admin nicht gefunden, zeige Account-Erstellung
+        this.showCreateAdminAccountModal(username, password);
+    }
+
+    // Admin-Account-Erstellungs-Modal anzeigen
+    showCreateAdminAccountModal(username, password) {
+        // Schließe aktuelle Modal
+        document.getElementById('adminCredentialsModal').classList.add('hidden');
+        
+        // Erstelle Account-Erstellungs-Modal
+        const modal = document.createElement('div');
+        modal.id = 'createAdminAccountModal';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="gaming-container gaming-card rounded-lg p-6 w-full max-w-md">
+                <h3 class="text-lg font-semibold gaming-text mb-4">Admin-Account erstellen</h3>
+                <p class="gaming-text-secondary mb-4">Möchtest du einen neuen Admin-Account erstellen?</p>
+                <div class="mb-4">
+                    <p class="text-sm gaming-text-secondary">Benutzername: <strong>${username}</strong></p>
+                    <p class="text-sm gaming-text-secondary">Passwort: <strong>${password}</strong></p>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="window.fileExplorer.createNewAdminAccount('${username}', '${password}')" class="flex-1 gaming-button text-white py-2 rounded-lg">
+                        Erstellen
+                    </button>
+                    <button onclick="window.fileExplorer.cancelCreateAdminAccount()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg">
+                        Abbrechen
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // Neuen Admin-Account erstellen
+    createNewAdminAccount(username, password) {
+        const newAdmin = {
+            id: Date.now(),
+            username: username,
+            password: password,
+            email: `${username}@admin.local`,
+            createdAt: new Date().toISOString(),
+            createdBy: this.currentUser?.username || 'system'
+        };
+        
+        this.adminAccounts.push(newAdmin);
+        this.saveAdminConfig();
+        
+        // Modal schließen
+        this.cancelCreateAdminAccount();
+        
+        // Erfolgsmeldung
+        this.showNotification(`Admin-Account "${username}" erfolgreich erstellt!`);
+        
+        // Automatisch als neuer Admin einloggen
+        this.loginAsAdmin(username, newAdmin.email);
+    }
+
+    // Admin-Account-Erstellung abbrechen
+    cancelCreateAdminAccount() {
+        const modal = document.getElementById('createAdminAccountModal');
+        if (modal) {
+            document.body.removeChild(modal);
+        }
+        this.closeAdminCredentialsModal();
     }
 
     login() {
@@ -1236,12 +1325,20 @@ class FileExplorer {
     }
 }
 
-function createAdminAccount() {
-    const username = prompt('Admin-Benutzername:');
-    const password = prompt('Admin-Passwort:');
-    if (username && password) {
-        window.fileExplorer.createAdminAccount(username, password);
-    }
+function cancelSecurityPassword() {
+    window.fileExplorer.cancelSecurityPassword();
+}
+
+function cancelAdminCredentials() {
+    window.fileExplorer.cancelAdminCredentials();
+}
+
+function createNewAdminAccount(username, password) {
+    window.fileExplorer.createNewAdminAccount(username, password);
+}
+
+function cancelCreateAdminAccount() {
+    window.fileExplorer.cancelCreateAdminAccount();
 }
 
 function verifySecurityPassword() {
