@@ -230,15 +230,29 @@ class FileExplorer {
     }
 
     showNormalStartPage() {
-        // Normale Startseite anzeigen (ohne Admin-Login Hinweis)
+        // Normale Startseite mit Auswahlmöglichkeiten anzeigen
         const startPage = document.getElementById('startPage');
         if (startPage) {
             startPage.innerHTML = `
-                <div class="gaming-container rounded-lg p-8 w-full max-w-md">
+                <div class="gaming-container rounded-lg p-8 w-full max-w-2xl">
                     <div class="text-center mb-8">
                         <i class="fas fa-gamepad text-4xl text-blue-400 mb-4 neon-glow"></i>
                         <h1 class="text-2xl font-bold gaming-text mb-2">JoelyL4Y's File Explorer</h1>
                         <p class="gaming-text-secondary">Willkommen auf meiner Webseite!</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="gaming-card rounded-lg p-6 text-center cursor-pointer hover:shadow-lg transition-all duration-200" onclick="showFileExplorer()">
+                            <i class="fas fa-folder text-4xl text-blue-400 mb-4"></i>
+                            <h3 class="text-lg font-semibold gaming-text mb-2">Dateien</h3>
+                            <p class="text-sm gaming-text-secondary">Alle hochgeladenen Dateien ansehen</p>
+                        </div>
+                        
+                        <div class="gaming-card rounded-lg p-6 text-center cursor-pointer hover:shadow-lg transition-all duration-200" onclick="showLinks()">
+                            <i class="fas fa-link text-4xl text-green-400 mb-4"></i>
+                            <h3 class="text-lg font-semibold gaming-text mb-2">Links</h3>
+                            <p class="text-sm gaming-text-secondary">Gespeicherte Links ansehen</p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -448,9 +462,11 @@ class FileExplorer {
     showFileExplorer() {
         const startPage = document.getElementById('startPage');
         const fileExplorer = document.getElementById('fileExplorer');
+        const linksPage = document.getElementById('linksPage');
         
         if (startPage) startPage.classList.add('hidden');
         if (fileExplorer) fileExplorer.classList.remove('hidden');
+        if (linksPage) linksPage.classList.add('hidden');
         
         // Upload-Zone nur für Admins anzeigen
         const uploadSection = document.getElementById('uploadSection');
@@ -461,9 +477,7 @@ class FileExplorer {
                 uploadSection.classList.add('hidden');
             }
         }
-        
         this.renderFiles();
-        this.updateStats();
     }
 
     showLinks() {
