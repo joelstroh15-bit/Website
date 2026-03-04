@@ -118,6 +118,10 @@ class FileExplorer {
         this.setupF7Key();
         this.checkLoginStatus();
         
+        // Debug: Initialisierung
+        console.log('FileExplorer initialisiert');
+        console.log('Admin-Login: Strg+Shift+A oder Alt+Shift+A');
+        
         // Warten bis DOM geladen ist, dann Startseite zeigen
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -211,9 +215,16 @@ class FileExplorer {
 
     setupF7Key() {
         document.addEventListener('keydown', (e) => {
-            // F7 Taste für Admin-Login (versteckt)
-            if (e.key === 'F7' || e.keyCode === 118) {
+            // Strg + Shift + A für Admin-Login (sichere Kombination)
+            if (e.ctrlKey && e.shiftKey && e.key === 'A') {
                 e.preventDefault();
+                console.log('Admin-Login via Strg+Shift+A');
+                this.showAdminLoginModal();
+            }
+            // Alternative: Alt + Shift + A
+            if (e.altKey && e.shiftKey && e.key === 'A') {
+                e.preventDefault();
+                console.log('Admin-Login via Alt+Shift+A');
                 this.showAdminLoginModal();
             }
         });
@@ -229,6 +240,9 @@ class FileExplorer {
     }
 
     showStartPage() {
+        console.log('showStartPage aufgerufen');
+        console.log('isLoggedIn:', this.isLoggedIn);
+        
         const startPage = document.getElementById('startPage');
         const fileExplorer = document.getElementById('fileExplorer');
         
@@ -237,17 +251,22 @@ class FileExplorer {
         
         if (this.isLoggedIn) {
             // Admin eingeloggt → Dashboard anzeigen
+            console.log('Admin eingeloggt - zeige Dashboard');
             this.showUserDashboard();
         } else {
             // Nicht eingeloggt → normale Startseite anzeigen
+            console.log('Nicht eingeloggt - zeige normale Startseite');
             this.showNormalStartPage();
         }
     }
 
     showNormalStartPage() {
+        console.log('showNormalStartPage aufgerufen');
+        
         // Normale Startseite mit Auswahlmöglichkeiten anzeigen
         const startPage = document.getElementById('startPage');
         if (startPage) {
+            console.log('Startseite gefunden - setze HTML');
             startPage.innerHTML = `
                 <div class="gaming-container rounded-lg p-8 w-full max-w-2xl">
                     <div class="text-center mb-8">
@@ -271,6 +290,9 @@ class FileExplorer {
                     </div>
                 </div>
             `;
+            console.log('HTML gesetzt');
+        } else {
+            console.log('Startseite nicht gefunden!');
         }
     }
 
@@ -475,9 +497,13 @@ class FileExplorer {
     }
 
     showFileExplorer() {
+        console.log('showFileExplorer aufgerufen');
+        
         const startPage = document.getElementById('startPage');
         const fileExplorer = document.getElementById('fileExplorer');
         const linksPage = document.getElementById('linksPage');
+        
+        console.log('Elemente:', { startPage, fileExplorer, linksPage });
         
         if (startPage) startPage.classList.add('hidden');
         if (fileExplorer) fileExplorer.classList.remove('hidden');
@@ -496,9 +522,13 @@ class FileExplorer {
     }
 
     showLinks() {
+        console.log('showLinks aufgerufen');
+        
         const startPage = document.getElementById('startPage');
         const fileExplorer = document.getElementById('fileExplorer');
         const linksPage = document.getElementById('linksPage');
+        
+        console.log('Elemente:', { startPage, fileExplorer, linksPage });
         
         if (startPage) startPage.classList.add('hidden');
         if (fileExplorer) fileExplorer.classList.add('hidden');
