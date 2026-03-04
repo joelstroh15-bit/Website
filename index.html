@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JoelyL4Y's File Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes slideIn { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-slide-in { animation: slideIn 0.3s ease-out; }
+        
+        /* Gaming Design - Wolken entfernt */
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #667eea 75%, #764ba2 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            position: relative;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        /* Light Theme */
+        body.light-theme {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 25%, #ffeaa7 50%, #a8edea 75%, #fed6e3 100%);
+            background-size: 400% 400%;
+        }
+        
+        /* Admin Theme - keine Wolken */
+        body.admin-theme {
+            background: #000000;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body.admin-theme::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.15) 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.15) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: 0 0, 25px 25px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        body.admin-theme .gaming-container {
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        body.admin-theme .gaming-text {
+            color: #ffffff;
+        }
+        
+        body.admin-theme .gaming-text-secondary {
+            color: #cccccc;
+        }
+        
+        body.admin-theme .gaming-button {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        body.admin-theme .gaming-card {
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Admin-Partikel */
+        .admin-particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+        
+        .gaming-container {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+        }
+        
+        .gaming-header {
+            background: rgba(30, 41, 59, 0.9);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
+        }
+        
+        .gaming-button {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .gaming-button:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .gaming-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .gaming-card:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+        }
+        
+        .gaming-input {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #e2e8f0;
+        }
+        
+        .gaming-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Gaming Text Verbesserungen für bessere Lesbarkeit */
+        .gaming-text {
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .gaming-text-secondary {
+            color: #e2e8f0;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.6), 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Wolken-Animation */
+        .clouds {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            opacity: 0.4;
+        }
+        
+        .cloud::before {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+        }
+        
+        .cloud1 {
+            width: 100px;
+            height: 40px;
+            top: 20%;
+            animation: float 20s infinite;
+        }
+        
+        .cloud1::before {
+            width: 50px;
+            height: 50px;
+            top: -25px;
+            left: 10px;
+        }
+        
+        .cloud2 {
+            width: 80px;
+            height: 35px;
+            top: 60%;
+            animation: float 25s infinite;
+        }
+        
+        .cloud2::before {
+            width: 60px;
+            height: 40px;
+            top: -20px;
+            right: 15px;
+        }
+        
+        .cloud3 {
+            width: 120px;
+            height: 45px;
+            top: 40%;
+            animation: float 30s infinite;
+        }
+        
+        .cloud3::before {
+            width: 70px;
+            height: 50px;
+            top: -25px;
+            left: 25px;
+        }
+        
+        @keyframes float {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(calc(100vw + 100px)); }
+        }
+        
+        /* Modal Styles */
+        .modal {
+            backdrop-filter: blur(4px);
+        }
+        
+        .context-menu {
+            position: fixed;
+            z-index: 1000;
+        }
+        
+        /* Mobile Optimierung */
+        @media (max-width: 768px) {
+            .gaming-card {
+                padding: 12px;
+            }
+            
+            .modal .gaming-container {
+                width: 90%;
+                max-width: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-900">
+    <!-- Wolken-Animation -->
+    <div class="clouds">
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+        <div class="cloud cloud3"></div>
+    </div>
+    
+    <!-- Header -->
+    <header class="gaming-header fixed top-0 left-0 right-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-gamepad text-blue-400 text-2xl neon-glow"></i>
+                    <h1 class="text-xl font-semibold gaming-text neon-glow">JoelyL4Y's File Explorer</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="gaming-button text-white px-3 py-2 rounded-lg text-sm" title="Theme wechseln">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                    <div id="authSection" class="flex items-center space-x-3">
+                        <button id="logoutBtn" class="hidden gaming-button text-white px-4 py-2 rounded-lg text-sm">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                        <button id="accountBtn" class="hidden gaming-button text-white px-4 py-2 rounded-lg text-sm">
+                            <i class="fas fa-user-cog mr-2"></i>Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20">
+        <!-- Startseite (wenn nicht eingeloggt) -->
+        <div id="startPage" class="flex items-center justify-center min-h-screen">
+            <div class="gaming-container rounded-lg p-8 w-full max-w-md">
+                <div class="text-center mb-8">
+                    <i class="fas fa-gamepad text-4xl text-blue-400 mb-4 neon-glow"></i>
+                    <h1 class="text-2xl font-bold gaming-text mb-2">JoelyL4Y's File Explorer</h1>
+                    <p class="gaming-text-secondary">Willkommen auf meiner Webseite!</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- File Explorer (nach Login) -->
+        <div id="fileExplorer" class="hidden">
+            <!-- Navigation -->
+            <div class="gaming-container gaming-card rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button onclick="showStartPage()" class="gaming-button text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-home mr-1"></i>Start
+                        </button>
+                        <button onclick="showFileExplorer()" class="gaming-button text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-folder mr-1"></i>Dateien
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="fileCount" class="text-sm gaming-text-secondary">0 Dateien</span>
+                        <span id="totalSize" class="text-sm gaming-text-secondary">0 MB</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upload Zone -->
+            <div id="uploadSection" class="gaming-container gaming-card rounded-lg p-6 mb-6">
+                <div class="text-center">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-blue-400 mb-4"></i>
+                    <h3 class="text-lg font-medium gaming-text mb-2">Dateien hochladen</h3>
+                    <p class="text-sm gaming-text-secondary mb-4">Ziehe Dateien hierher oder klicke zum Auswählen</p>
+                    <div class="flex justify-center">
+                        <div id="uploadZone" class="border-2 border-dashed border-blue-500/50 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer">
+                            <i class="fas fa-folder-open text-3xl text-blue-400/50 mb-2"></i>
+                            <p class="gaming-text-secondary">Dateien auswählen</p>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" multiple class="hidden">
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="gaming-container gaming-card rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button id="viewToggle" class="text-gray-400 hover:text-blue-400 transition-colors">
+                            <i class="fas fa-th-large text-xl"></i>
+                        </button>
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="Dateien suchen..." class="gaming-input pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button id="advancedSearchBtn" class="gaming-button text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-filter mr-1"></i>Filter
+                        </button>
+                    </div>
+                    <div id="adminControls" class="hidden items-center space-x-2">
+                        <button id="selectAllBtn" class="px-3 py-1.5 text-sm bg-blue-900/30 text-blue-300 rounded hover:bg-blue-900/50 transition-colors">
+                            <i class="fas fa-check-square mr-1"></i>Alle auswählen
+                        </button>
+                        <button id="deleteSelectedBtn" class="px-3 py-1.5 text-sm bg-red-900/30 text-red-300 rounded hover:bg-red-900/50 transition-colors disabled:opacity-50" disabled>
+                            <i class="fas fa-trash mr-1"></i>Löschen
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Advanced Search Panel -->
+            <div id="advancedSearchPanel" class="hidden gaming-container gaming-card rounded-lg p-4 mb-6">
+                <h4 class="text-lg font-medium gaming-text mb-4">Erweiterte Suche</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm gaming-text-secondary mb-2">Dateityp</label>
+                        <select id="fileTypeFilter" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Alle Dateien</option>
+                            <option value="image">Bilder</option>
+                            <option value="video">Videos</option>
+                            <option value="audio">Audio</option>
+                            <option value="document">Dokumente</option>
+                            <option value="archive">Archive</option>
+                            <option value="other">Sonstiges</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm gaming-text-secondary mb-2">Datum</label>
+                        <select id="dateFilter" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Alle Zeitpunkte</option>
+                            <option value="today">Heute</option>
+                            <option value="yesterday">Gestern</option>
+                            <option value="week">Diese Woche</option>
+                            <option value="month">Dieser Monat</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm gaming-text-secondary mb-2">Größe</label>
+                        <select id="sizeFilter" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Alle Größen</option>
+                            <option value="small">Klein (&lt; 1 MB)</option>
+                            <option value="medium">Mittel (1-10 MB)</option>
+                            <option value="large">Groß (&gt; 10 MB)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button onclick="clearFilters()" class="px-4 py-2 gaming-text hover:bg-blue-900/30 rounded-lg transition-colors">
+                        <i class="fas fa-times mr-1"></i>Filter löschen
+                    </button>
+                    <button onclick="applyFilters()" class="gaming-button text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-search mr-1"></i>Suchen
+                    </button>
+                </div>
+            </div>
+
+            <!-- File Grid/List View -->
+            <div id="fileContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <!-- Files will be dynamically added here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="text-center py-16">
+                <i class="fas fa-folder-open text-6xl text-blue-400/30 mb-4"></i>
+                <h3 class="text-lg font-medium gaming-text mb-2">Keine Dateien vorhanden</h3>
+                <p class="text-sm gaming-text-secondary">Lade einige Dateien hoch, um zu beginnen</p>
+            </div>
+        </div>
+        
+        <!-- Links-Seite (nach Login) -->
+        <div id="linksPage" class="hidden">
+            <!-- Navigation -->
+            <div class="gaming-container gaming-card rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button onclick="showStartPage()" class="gaming-button text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-home mr-1"></i>Start
+                        </button>
+                        <button onclick="showLinks()" class="gaming-button text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-link mr-1"></i>Links
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="linksCount" class="text-sm gaming-text-secondary">0 Links</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Links Container -->
+            <div id="linksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <!-- Links werden hier dynamisch hinzugefügt -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="linksEmptyState" class="text-center py-16">
+                <i class="fas fa-link text-6xl text-blue-400/30 mb-4"></i>
+                <h3 class="text-lg font-medium gaming-text mb-2">Keine Links vorhanden</h3>
+                <p class="text-sm gaming-text-secondary">Füge Links hinzu, um sie hier anzuzeigen</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu hidden gaming-container rounded-lg shadow-xl border border-blue-500/30 py-2 min-w-[150px] z-50">
+        <button class="context-menu-item w-full text-left px-3 py-2 text-sm hover:bg-blue-900/30 flex items-center gaming-text" data-action="download">
+            <i class="fas fa-download mr-2 text-blue-400"></i>Download
+        </button>
+        <button class="context-menu-item w-full text-left px-3 py-2 text-sm hover:bg-blue-900/30 flex items-center gaming-text" data-action="favorite">
+            <i class="fas fa-star mr-2 text-yellow-400"></i>Favorit
+        </button>
+        <button id="renameMenuItem" class="context-menu-item hidden w-full text-left px-3 py-2 text-sm hover:bg-blue-900/30 flex items-center gaming-text" data-action="rename">
+            <i class="fas fa-edit mr-2 text-blue-400"></i>Umbenennen
+        </button>
+        <button id="deleteMenuItem" class="context-menu-item hidden w-full text-left px-3 py-2 text-sm hover:bg-blue-900/30 flex items-center gaming-text text-red-400" data-action="delete">
+            <i class="fas fa-trash mr-2"></i>Löschen
+        </button>
+    </div>
+
+    <!-- File Rename Modal (für Upload) -->
+    <div id="fileRenameModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="gaming-container rounded-lg p-6 w-full max-w-2xl animate-slide-in">
+            <h3 class="text-lg font-semibold gaming-text mb-4 neon-glow">Dateien benennen</h3>
+            <div id="fileRenameList" class="space-y-3 max-h-96 overflow-y-auto">
+                <!-- Dateien werden hier dynamisch hinzugefügt -->
+            </div>
+            <div class="flex justify-end space-x-2 pt-4">
+                <button onclick="closeFileRenameModal()" class="px-4 py-2 gaming-text hover:bg-blue-900/30 rounded-lg transition-colors">Abbrechen</button>
+                <button onclick="confirmFileRename()" class="gaming-button text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-upload mr-2"></i>Upload starten
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rename Modal -->
+    <div id="renameModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="gaming-container rounded-lg p-6 w-96 animate-slide-in">
+            <h3 class="text-lg font-semibold gaming-text mb-4">Datei umbenennen</h3>
+            <input type="text" id="renameInput" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeRenameModal()" class="px-4 py-2 gaming-text hover:bg-blue-900/30 rounded-lg transition-colors">Abbrechen</button>
+                <button onclick="confirmRename()" class="gaming-button text-white px-4 py-2 rounded-lg">Umbenennen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Login Modal (Admin F7) -->
+    <div id="loginModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="gaming-container rounded-lg p-6 w-96 animate-slide-in">
+            <h3 class="text-lg font-semibold gaming-text mb-4 neon-glow">Admin Login</h3>
+            
+            <!-- Sicherheits-Passwort Modal -->
+            <div id="securityPasswordModal">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm gaming-text-secondary mb-2">Sicherheits-Passwort</label>
+                        <input type="password" id="securityPassword" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="">
+                    </div>
+                    <div class="flex justify-end">
+                        <button onclick="closeLoginModal()" class="px-4 py-2 gaming-text hover:bg-blue-900/30 rounded-lg transition-colors">Abbrechen</button>
+                        <button onclick="verifySecurityPassword()" class="gaming-button text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-shield-alt mr-2"></i>Weiter
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin-Zugangsdaten Modal -->
+            <div id="adminCredentialsModal" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm gaming-text-secondary mb-2">Benutzername</label>
+                    <input type="text" id="usernameInput" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="">
+                </div>
+                <div>
+                    <label class="block text-sm gaming-text-secondary mb-2">Passwort</label>
+                    <input type="password" id="passwordInput" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="">
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button onclick="closeAdminCredentialsModal()" class="px-4 py-2 gaming-text hover:bg-blue-900/30 rounded-lg transition-colors">Zurück</button>
+                    <button onclick="performAdminLogin()" class="gaming-button text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Account Modal -->
+    <div id="createAccountModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="gaming-container rounded-lg p-6 w-96 animate-slide-in">
+            <h3 class="text-lg font-semibold gaming-text mb-4 neon-glow">Account erstellen</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm gaming-text-secondary mb-2">Benutzername</label>
+                    <input type="text" id="newUsernameInput" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="">
+                </div>
+                <div>
+                    <label class="block text-sm gaming-text-secondary mb-2">Passwort</label>
+                    <input type="password" id="newPasswordInput" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="">
+                </div>
+                <div>
+                    <label class="block text-sm gaming-text-secondary mb-2">Passwort bestätigen</label>
+                    <input type="password" id="confirmPasswordInput" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="">
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button onclick="closeCreateAccountModal()" class="px-4 py-2 gaming-text hover:bg-blue-900/30 rounded-lg transition-colors">Abbrechen</button>
+                    <button onclick="createAccount()" class="gaming-button text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-user-plus mr-2"></i>Erstellen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Account Settings Modal -->
+    <div id="accountSettingsModal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="gaming-container rounded-lg p-6 w-96 animate-slide-in">
+            <h3 class="text-lg font-semibold gaming-text mb-4 neon-glow">Account-Einstellungen</h3>
+            <div class="space-y-4">
+                <div class="gaming-card rounded-lg p-3">
+                    <p class="text-sm gaming-text-secondary">Aktueller Benutzer</p>
+                    <p class="font-medium gaming-text" id="currentUsername">-</p>
+                </div>
+                <div>
+                    <label class="block text-sm gaming-text-secondary mb-2">Neues Passwort (optional)</label>
+                    <input type="password" id="changePasswordInput" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Neues Passwort">
+                </div>
+                <div>
+                    <label class="block text-sm gaming-text-secondary mb-2">Passwort bestätigen</label>
+                    <input type="password" id="changeConfirmPasswordInput" class="gaming-input w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Passwort bestätigen">
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button onclick="closeAccountSettingsModal()" class="px-4 py-2 gaming-text hover:bg-blue-900/30 rounded-lg transition-colors">Abbrechen</button>
+                    <button onclick="updatePassword()" class="gaming-button text-white px-4 py-2 rounded-lg">Aktualisieren</button>
+                    <button onclick="deleteAccount()" class="px-4 py-2 bg-red-900/30 text-red-300 rounded hover:bg-red-900/50 transition-colors">Löschen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
